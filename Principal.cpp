@@ -10,6 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 #include "Dictionnaire.h"
 
 using namespace std;
@@ -88,6 +89,7 @@ int main()
 	{
 		cerr << e.what() << endl;
 	}
+
 
 	return 0;
 }
