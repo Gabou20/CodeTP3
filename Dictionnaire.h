@@ -130,14 +130,42 @@ private:
 	    int m_hauteur;							// La hauteur de ce noeud (afin de maintenir l'équilibre de l'arbre AVL)
 
 		// Vous pouvez ajouter ici un contructeur de NoeudDictionnaire
-		NoeudDictionnaire(std::string p_mot, std::vector<std::string> p_traductions) : m_mot(p_mot), m_traductions(p_traductions) {};
+		NoeudDictionnaire(std::string p_mot, NoeudDictionnaire * p_gauche, NoeudDictionnaire * p_droite, int p_hauteur) :
+                m_mot(p_mot),
+                m_traductions(0),
+                m_gauche(p_gauche),
+                m_droite(p_droite),
+                m_hauteur(p_hauteur)
+        {};
 	};
     
 	NoeudDictionnaire *m_racine;		// La racine de l'arbre des mots
-    
+
     int m_cpt;						// Le nombre de mots dans le dictionnaire
 
-	const NoeudDictionnaire * trouverNoeud(const NoeudDictionnaire* p_noeud, const std::string &p_data) const;
+	NoeudDictionnaire * _trouverNoeud(NoeudDictionnaire* p_noeud, const std::string &p_data) const;
+
+    bool estBalance() const;
+
+    NoeudDictionnaire * _trouverDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud) const;
+
+    void _auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction);
+
+    void _balancerDictionnaire(Dictionnaire::NoeudDictionnaire* p_noeud);
+
+    int trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const;
+
+    void ajusterHauteur(Dictionnaire::NoeudDictionnaire* p_noeud);
+
+    void zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud);
+
+    void zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
+
+    void zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud);
+
+    void zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
+
+    std::string sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud);
 };
     
 }

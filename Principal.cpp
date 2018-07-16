@@ -19,6 +19,13 @@ using namespace TP3;
 int main()
 {
 
+    Dictionnaire D;
+    D.ajouteMot("Hello", "Bonjour");
+    D.ajouteMot("Hi", "Salut");
+    cout << D.estVide() << "\n";
+    cout << D;
+
+/*
 	try
 	{
 
@@ -89,7 +96,7 @@ int main()
 	{
 		cerr << e.what() << endl;
 	}
-
+*/
 
 	return 0;
 }

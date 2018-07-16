@@ -16,7 +16,7 @@
 namespace TP3
 {
 //Constructeur
-Dictionnaire::Dictionnaire() : m_racine(0), m_cpt(0) {}
+Dictionnaire::Dictionnaire() : m_racine(nullptr), m_cpt(0) {}
 
 //Destructeur.
 Dictionnaire::~Dictionnaire() {} //Itere pour supprimer les noeuds
@@ -93,13 +93,22 @@ Dictionnaire::Dictionnaire(std::ifstream &fichier): m_racine(nullptr), m_cpt(0)
 }
 
 //Ajouter un mot au dictionnaire et l'une de ses traductions en équilibrant l'arbre AVL
-void Dictionnaire::ajouteMot(const std ::string& p_motOriginal, const std ::string& p_motTraduit) {}
+void Dictionnaire::ajouteMot(const std::string& p_motOriginal, const std ::string& p_motTraduit)
+{
+    _auxAjouteMot(m_racine, p_motOriginal, p_motTraduit);
+}
 
 //Supprimer un mot et équilibrer l'arbre AVL
 //Si le mot appartient au dictionnaire, on l'enlève et on équilibre. Sinon, on ne fait rien.
 //Exception	logic_error si l'arbre est vide
 //Exception	logic_error si le mot n'appartient pas au dictionnaire
-void Dictionnaire::supprimeMot(const std ::string& p_motOriginal) {}
+void Dictionnaire::supprimeMot(const std ::string& p_motOriginal)
+{
+    if (estVide())
+    {
+        throw std::logic_error("Le dictionnaire est vide!");
+    }
+}
 
 //Quantifier la similitude entre 2 mots (dans le dictionnaire ou pas)
 //Ici, 1 représente le fait que les 2 mots sont identiques, 0 représente le fait que les 2 mots sont complètements différents
@@ -157,7 +166,10 @@ double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& 
 //Exception	logic_error si le dictionnaire est vide
 std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_motMalEcrit)
 {
-
+    if (estVide())
+    {
+        throw std::logic_error("Le dictionnaire est vide!");
+    }
 }
 
 //Trouver les traductions possibles d'un mot
@@ -165,7 +177,7 @@ std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_
 //Sinon, on retourne un vecteur vide
 std::vector<std::string> Dictionnaire::traduit(const std ::string& p_mot)
 {
-    const NoeudDictionnaire * recherche = trouverNoeud(m_racine, p_mot);
+    const NoeudDictionnaire * recherche = _trouverNoeud(m_racine, p_mot);
 
     if (recherche != nullptr)
     {
@@ -184,7 +196,7 @@ bool Dictionnaire::appartient(const std::string &p_data)
         return false;
     }
 
-    return Dictionnaire::trouverNoeud(m_racine, p_data) != nullptr && !this -> estVide();
+    return Dictionnaire::_trouverNoeud(m_racine, p_data) != nullptr && !this -> estVide();
 }
 
 //Vérifier si le dictionnaire est vide
@@ -195,7 +207,7 @@ bool Dictionnaire::estVide() const
 
 //retourne le meme noeud si p_noeud contient le bon mot, le bon noeud enfant sinon et nullptr si on a atteint une feuille
     //Le noeud en argument ne doit pas etre nullptr
-const NoeudDictionnaire * Dictionnaire::trouverNoeud(const Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_data) const
+Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_data) const
 {
     if (p_noeud -> m_mot == p_data)
     {
@@ -209,7 +221,7 @@ const NoeudDictionnaire * Dictionnaire::trouverNoeud(const Dictionnaire::NoeudDi
         }
         else
         {
-            return Dictionnaire::trouverNoeud(p_noeud -> m_gauche, p_data);
+            return Dictionnaire::_trouverNoeud(p_noeud -> m_gauche, p_data);
         }
     }
     else if (p_data > p_noeud -> m_mot)
@@ -220,9 +232,197 @@ const NoeudDictionnaire * Dictionnaire::trouverNoeud(const Dictionnaire::NoeudDi
         }
         else
         {
-            return Dictionnaire::trouverNoeud(p_noeud -> m_droite, p_data);
+            return Dictionnaire::_trouverNoeud(p_noeud -> m_droite, p_data);
         }
     }
+}
+
+int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const
+{
+    Dictionnaire::NoeudDictionnaire* cote;
+
+    if (p_cote == "gauche")
+    {
+        cote = p_noeud -> m_gauche;
+    }
+
+    if (p_cote == "droite")
+    {
+        cote = p_noeud -> m_droite;
+    }
+
+    if (cote == nullptr)
+    {
+        return -1;
+    }
+    else
+    {
+        return cote -> m_hauteur;
+    }
+}
+
+bool Dictionnaire::estBalance() const
+{
+    return _trouverDebalancement(m_racine) == nullptr;
+}
+
+Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud) const
+{
+    int gauche = trouverHauteur(p_noeud, "gauche");
+    int droite = trouverHauteur(p_noeud, "droite");
+
+    if (gauche - droite < -1 || gauche - droite > 1)
+    {
+        return p_noeud;
+    }
+
+    if (gauche != -1)
+    {
+        return Dictionnaire::_trouverDebalancement(p_noeud -> m_gauche);
+    }
+
+    if (droite != -1)
+    {
+        return Dictionnaire::_trouverDebalancement(p_noeud -> m_droite);
+    }
+
+    return nullptr;
+}
+
+std::string Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud)
+{
+    int gauche = trouverHauteur(p_noeud, "gauche");
+    int droite = trouverHauteur(p_noeud, "droite");
+
+
+    int gaucheGauche = trouverHauteur(p_noeud -> m_gauche, "gauche");
+    int gaucheDroite = trouverHauteur(p_noeud -> m_droite, "droite");
+    int droiteDroite = trouverHauteur(p_noeud -> m_droite, "droite");
+    int droiteGauche = trouverHauteur(p_noeud -> m_gauche, "gauche");
+
+    //Debalancement a gauche
+    if (gauche - droite < -1)
+    {
+        if (gaucheGauche - gaucheDroite <= 0)
+        {
+            return "GG";
+        }
+        else if (gaucheGauche - gaucheDroite > 1)
+        {
+            return "GD";
+        }
+    }
+
+    //Debalancement a droite
+    if (gauche - droite > 1)
+    {
+        if (droiteGauche - droiteDroite < -1)
+        {
+            return "DG";
+        }
+        else if (droiteGauche - droiteDroite >= 0)
+        {
+            return "DD";
+        }
+    }
+}
+
+
+void Dictionnaire::_auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction)
+{
+    if (p_noeud == nullptr)
+    {
+        p_noeud = new NoeudDictionnaire(p_mot, nullptr, nullptr, 0);
+        p_noeud -> m_traductions.push_back(p_traduction);
+        m_cpt++;
+    }
+    else if (p_mot < p_noeud -> m_mot)
+    {
+        _auxAjouteMot(p_noeud -> m_gauche, p_mot, p_traduction);
+    }
+    else if (p_mot > p_noeud -> m_mot)
+    {
+        _auxAjouteMot(p_noeud -> m_droite, p_mot, p_traduction);
+    }
+    else
+    {
+        p_noeud -> m_traductions.push_back(p_traduction);
+    }
+
+    _balancerDictionnaire(p_noeud);
+
+    if (estVide())
+    {
+        m_racine = p_noeud;
+    }
+
+}
+
+void Dictionnaire::_balancerDictionnaire(Dictionnaire::NoeudDictionnaire* p_noeud)
+{
+    if (estVide()) return;
+    if (estBalance()) return;
+
+    std::string sens = sensDebalancement(p_noeud);
+
+    if (sens == "GG")
+    {
+        zigZigGauche(p_noeud);
+    }
+    else if (sens == "DD")
+    {
+        zigZigDroite(p_noeud);
+    }
+    else if (sens == "GD")
+    {
+        zigZagGauche(p_noeud);
+    }
+    else if (sens == "DG")
+    {
+        zigZagDroite(p_noeud);
+    }
+    else
+    {
+        ajusterHauteur(p_noeud);
+    }
+}
+
+void Dictionnaire::ajusterHauteur(Dictionnaire::NoeudDictionnaire* p_noeud)
+{
+    p_noeud -> m_hauteur = 1 + std::max(trouverHauteur(p_noeud, "gauche"), trouverHauteur(p_noeud, "droite"));
+}
+
+void Dictionnaire::zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
+{
+    Dictionnaire::NoeudDictionnaire* ancienGauche = p_noeud -> m_gauche;
+    p_noeud -> m_gauche = ancienGauche -> m_droite;
+    ancienGauche -> m_droite = p_noeud;
+    ajusterHauteur(p_noeud);
+    ajusterHauteur(ancienGauche);
+    p_noeud = ancienGauche;
+}
+
+void Dictionnaire::zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeud)
+{
+    Dictionnaire::NoeudDictionnaire* ancienDroit = p_noeud -> m_droite;
+    p_noeud -> m_droite = ancienDroit -> m_gauche;
+    ancienDroit -> m_gauche = p_noeud;
+    ajusterHauteur(p_noeud);
+    ajusterHauteur(ancienDroit);
+    p_noeud = ancienDroit;
+}
+
+void Dictionnaire::zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
+{
+    zigZigDroite(p_noeud -> m_gauche);
+    zigZigGauche(p_noeud);
+
+}
+
+void Dictionnaire::zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud)
+{
+    zigZigGauche(p_noeud -> m_droite);
+    zigZigDroite(p_noeud);
 }
 
 	// Complétez ici l'implémentation des autres méthodes demandées ainsi que vos méthodes privées.
