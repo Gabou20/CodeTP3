@@ -20,6 +20,11 @@
 namespace TP3
 {
 
+typedef enum
+{
+    GG, DD, GD, DG
+} SensDebalanement;
+
 //classe représentant un dictionnaire des synonymes
 class Dictionnaire
 {
@@ -49,7 +54,6 @@ public:
 	//On retourne une valeur entre 0 et 1 quantifiant la similarité entre les 2 mots donnés
 	//Vous pouvez utiliser par exemple la distance de Levenshtein, mais ce n'est pas obligatoire !
 	double similitude(const std ::string& p_mot1, const std ::string& p_mot2);
-
 
 	//Suggère des corrections pour le mot motMalEcrit sous forme d'une liste de mots, dans un vector, à partir du dictionnaire
 	//S'il y a suffisament de mots, on redonne 5 corrections possibles au mot donné. Sinon, on en donne le plus possible
@@ -145,17 +149,19 @@ private:
 
 	NoeudDictionnaire * _trouverNoeud(NoeudDictionnaire* p_noeud, const std::string &p_data) const;
 
-    bool estBalance() const;
+    bool estBalance();
 
-    NoeudDictionnaire * _trouverDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud) const;
+    NoeudDictionnaire ** _trouverDebalancement(Dictionnaire::NoeudDictionnaire* &p_noeud) const;
 
     void _auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction);
 
-    void _balancerDictionnaire(Dictionnaire::NoeudDictionnaire* p_noeud);
+    void _auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::string &p_mot);
+
+    void _balancerDictionnaire(Dictionnaire::NoeudDictionnaire* &p_noeud);
 
     int trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const;
 
-    void ajusterHauteur(Dictionnaire::NoeudDictionnaire* p_noeud);
+    void ajusterHauteur(Dictionnaire::NoeudDictionnaire* &p_noeud);
 
     void zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud);
 
@@ -165,7 +171,7 @@ private:
 
     void zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
 
-    std::string sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud);
+    SensDebalanement sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud);
 };
     
 }

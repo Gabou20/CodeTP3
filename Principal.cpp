@@ -19,13 +19,6 @@ using namespace TP3;
 int main()
 {
 
-    Dictionnaire D;
-    D.ajouteMot("Hello", "Bonjour");
-    D.ajouteMot("Hi", "Salut");
-    cout << D.estVide() << "\n";
-    cout << D;
-
-/*
 	try
 	{
 
@@ -79,7 +72,27 @@ int main()
 		for (vector<string>::const_iterator i = motsAnglais.begin(); i != motsAnglais.end(); i++)
 			// Itération dans les mots anglais de la phrase donnée
 		{
-			// À compléter ...
+            vector<string> traductionsPossibles;
+            traductionsPossibles = dictEnFr.traduit(*i);
+            if (traductionsPossibles.size() > 1)
+            {
+                std::string choix = "";
+                int n = 0;
+                cout << "Il existe plusieurs traductions possibles, vous devez choisir : " << "\n";
+
+                for (vector<string>::const_iterator it = traductionsPossibles.begin(); it != traductionsPossibles.end(); it++)
+                {
+                    cout << n + 1 << ". " << *it << "\n";
+                    n++;
+                }
+
+                getline(cin, choix);
+                motsFrancais.push_back(traductionsPossibles[stoi(choix) - 1]);
+            }
+            else if (traductionsPossibles.size() == 1)
+            {
+                motsFrancais.push_back(traductionsPossibles[0]);
+            }
 		}
 
 		stringstream phraseFrancais; // On crée un string contenant la phrase,
@@ -96,7 +109,6 @@ int main()
 	{
 		cerr << e.what() << endl;
 	}
-*/
 
 	return 0;
 }
