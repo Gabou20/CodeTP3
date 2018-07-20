@@ -19,10 +19,16 @@ namespace TP3
 Dictionnaire::Dictionnaire() : m_racine(nullptr), m_cpt(0) {}
 
 //Destructeur.
-Dictionnaire::~Dictionnaire() {} //Itere pour supprimer les noeuds
+Dictionnaire::~Dictionnaire()
+{
+    _auxDestructeur(m_racine);
+}
+
 
 /**
  * \fn Dictionnaire::Dictionnaire(std::ifstream &fichier)
+ *
+ * \pre Le fichier doit etre ouvert au prealable
  *
  * \param[in] fichier Le fichier à partir duquel on construit le dictionnaire
  */
@@ -92,16 +98,34 @@ Dictionnaire::Dictionnaire(std::ifstream &fichier): m_racine(nullptr), m_cpt(0)
     }
 }
 
-//Ajouter un mot au dictionnaire et l'une de ses traductions en équilibrant l'arbre AVL
+
+/**
+ * \fn void Dictionnaire::ajouteMot(const std::string& p_motOriginal, const std ::string& p_motTraduit)
+ *
+ * \brief Ajoute un mot ou une nouvelle traduction au dictionnaire
+ *
+ * \param[in] p_motOriginal Le mot en anglais a ajouter
+ * \param[in] p_motTraduit Un mot en francais representant une traduction possible de p_motOriginal
+ *
+ * \post Le mot appartient maintenant au dictionnaire : si le mot anglais n'y etait pas deja, un nouveau noeud est cree. S'il y etait, le mot francais est ajoute a la liste de traductions possibles s'il n'y etait pas deja.
+ */
 void Dictionnaire::ajouteMot(const std::string& p_motOriginal, const std ::string& p_motTraduit)
 {
     _auxAjouteMot(m_racine, p_motOriginal, p_motTraduit);
 }
 
-//Supprimer un mot et équilibrer l'arbre AVL
-//Si le mot appartient au dictionnaire, on l'enlève et on équilibre. Sinon, on ne fait rien.
-//Exception	logic_error si l'arbre est vide
-//Exception	logic_error si le mot n'appartient pas au dictionnaire
+
+/**
+ * \fn void Dictionnaire::supprimeMot(const std ::string& p_motOriginal)
+ *
+ * \brief Si le mot appartient au dictionnaire, on l'enlève et on équilibre. Sinon, on ne fait rien.
+ *
+ * \param[in] p_motOriginal Le mot en anglais a supprimer
+ *
+ * \exception logic_error si l'arbre est vide ou si le mot a supprimer ne s'y trouve pas
+ *
+ * \post Le mot ne se trouve plus dans l'arbre du dictionnaire
+ */
 void Dictionnaire::supprimeMot(const std ::string& p_motOriginal)
 {
     if (estVide())
@@ -112,10 +136,17 @@ void Dictionnaire::supprimeMot(const std ::string& p_motOriginal)
     _auxSupprimeMot(m_racine, p_motOriginal);
 }
 
-//Quantifier la similitude entre 2 mots (dans le dictionnaire ou pas)
-//Ici, 1 représente le fait que les 2 mots sont identiques, 0 représente le fait que les 2 mots sont complètements différents
-//On retourne une valeur entre 0 et 1 quantifiant la similarité entre les 2 mots donnés
-//Vous pouvez utiliser par exemple la distance de Levenshtein, mais ce n'est pas obligatoire !
+
+/**
+ * \fn double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& p_mot2)
+ *
+ * \brief Quantifie la similitude entre 2 mots donnes en parametre
+ *
+ * \param[in] p_mot1 L'un des mots a comparer
+ * \param[in] p_mot2 L'autre mot a comparer
+ *
+ * \return Un reel entre 0 et 1 quantifiant la similarité entre les 2 mots donnés. 1 représente le fait que les 2 mots sont identiques, 0 représente le fait que les 2 mots sont complètements différents
+ */
 double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& p_mot2)
 {
     float differenceLongueurs = abs((int) p_mot1.length() - p_mot2.length());// La fonction compare les deux mots lettre a lettre, et additionne 1 au total pour chaque lettre non identique.
@@ -163,20 +194,52 @@ double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& 
 
 }
 
-//Suggère des corrections pour le mot motMalEcrit sous forme d'une liste de mots, dans un vector, à partir du dictionnaire
-//S'il y a suffisament de mots, on redonne 5 corrections possibles au mot donné. Sinon, on en donne le plus possible
-//Exception	logic_error si le dictionnaire est vide
+
+/**
+ * \fn std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_motMalEcrit)
+ *
+ * \brief Trouve les 5 meilleures suggestions de remplacement pour un mot introuvable dans le dictionnaire.
+ *
+ * \param[in] p_motMalEcrit Le mot pour lequel on doit trouver des suggestions
+ *
+ * \exception logic_error si le dictionnaire est vide.
+ *
+ * \return Un vecteur des 5 meilleures propositions selon la fonction similitude. S'il y a des egalites, les mots sont choisis par ordre alphabetique.
+ */
 std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_motMalEcrit)
 {
     if (estVide())
     {
         throw std::logic_error("Le dictionnaire est vide!");
     }
+
+    std::vector<paireSimilitudeMot> motsSimilitudes;
+    _auxCalculerSimilitudes(p_motMalEcrit, m_racine, &motsSimilitudes);
+
+    std::sort(motsSimilitudes.begin(), motsSimilitudes.end());
+
+    std::vector<std::string> choixMots;
+    int n = 0;
+    std::vector<paireSimilitudeMot>::iterator it = motsSimilitudes.end();
+    it--;
+    for (it; n < 5; it--)
+    {
+        choixMots.push_back(it -> second);
+        n++;
+    }
+    return choixMots;
 }
 
-//Trouver les traductions possibles d'un mot
-//Si le mot appartient au dictionnaire, on retourne le vecteur des traductions du mot donné.
-//Sinon, on retourne un vecteur vide
+
+/**
+ * \fn std::vector<std::string> Dictionnaire::traduit(const std ::string& p_mot)
+ *
+ * \brief Trouve le mot anglais dans le dictionnaire et en donne les traductions francaises
+ *
+ * \param[in] p_mot Le mot a traduire
+ *
+ * \return Le vecteur contenant les traductions francaises de p_mot, un vecteur vide si le mot n'a pas ete trouve.
+ */
 std::vector<std::string> Dictionnaire::traduit(const std ::string& p_mot)
 {
     const NoeudDictionnaire * recherche = _trouverNoeud(m_racine, p_mot);
@@ -189,8 +252,16 @@ std::vector<std::string> Dictionnaire::traduit(const std ::string& p_mot)
     return recherche -> m_traductions;
 }
 
-//Vérifier si le mot donné appartient au dictionnaire
-//On retourne true si le mot est dans le dictionnaire. Sinon, on retourne false.
+
+/**
+ * \fn bool Dictionnaire::appartient(const std::string &p_data)
+ *
+ * \brief Vérifie si le mot donné appartient au dictionnaire
+ *
+ * \param[in] p_data Le mot a chercher dans le dictionnaire
+ *
+ * \return true si le mot est dans le dictionnaire, false sinon
+ */
 bool Dictionnaire::appartient(const std::string &p_data)
 {
     if (this -> estVide())
@@ -201,21 +272,36 @@ bool Dictionnaire::appartient(const std::string &p_data)
     return Dictionnaire::_trouverNoeud(m_racine, p_data) != nullptr && !this -> estVide();
 }
 
-//Vérifier si le dictionnaire est vide
+
+/**
+ * \fn bool Dictionnaire::estVide() const
+ *
+ * \brief Vérifie si le dictionnaire est vide
+ *
+ * \return true si le dictionnaire est vide, false sinon
+ */
 bool Dictionnaire::estVide() const
 {
     return (m_racine == nullptr);
 }
 
-//retourne le meme noeud si p_noeud contient le bon mot, le bon noeud enfant sinon et nullptr si on a atteint une feuille
-    //Le noeud en argument ne doit pas etre nullptr
-Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_data) const
+
+/**
+ * \fn Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_data) const
+ *
+ * \pre Le noeud en argument ne doit pas etre nullptr
+ *
+ * \brief Trouve un noeud de facon recursive, en se basant sur le mot anglais
+ *
+ * \return Retourne le meme noeud si p_noeud contient le bon mot, le bon noeud enfant sinon et nullptr si on a atteint une feuille
+ */
+Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_mot) const
 {
-    if (p_noeud -> m_mot == p_data)
+    if (p_noeud -> m_mot == p_mot)
     {
         return p_noeud;
     }
-    else if (p_data < p_noeud -> m_mot)
+    else if (p_mot < p_noeud -> m_mot)
     {
         if (p_noeud -> m_gauche == nullptr)
         {
@@ -223,10 +309,10 @@ Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::Noeu
         }
         else
         {
-            return Dictionnaire::_trouverNoeud(p_noeud -> m_gauche, p_data);
+            return Dictionnaire::_trouverNoeud(p_noeud -> m_gauche, p_mot);
         }
     }
-    else if (p_data > p_noeud -> m_mot)
+    else if (p_mot > p_noeud -> m_mot)
     {
         if (p_noeud -> m_droite == nullptr)
         {
@@ -234,11 +320,19 @@ Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::Noeu
         }
         else
         {
-            return Dictionnaire::_trouverNoeud(p_noeud -> m_droite, p_data);
+            return Dictionnaire::_trouverNoeud(p_noeud -> m_droite, p_mot);
         }
     }
 }
 
+
+/**
+ * \fn int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const
+ *
+ * \brief Trouve la hauteur d'un noeud enfant de p_noeud de facon recursive
+ *
+ * \return La hauteur du fils du cote p_cote de p_noeud
+ */
 int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const
 {
     Dictionnaire::NoeudDictionnaire* cote;
@@ -268,10 +362,19 @@ int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud,
     }
 }
 
+
+/**
+ * \fn bool Dictionnaire::estBalance()
+ *
+ * \brief Determine si l'arbre est balance
+ *
+ * \return true si l'arbre est balance, false sinon
+ */
 bool Dictionnaire::estBalance()
 {
     return _trouverDebalancement(m_racine) == nullptr;
 }
+
 
 Dictionnaire::NoeudDictionnaire ** Dictionnaire::_trouverDebalancement(Dictionnaire::NoeudDictionnaire* &p_noeud) const
 {
@@ -300,6 +403,7 @@ Dictionnaire::NoeudDictionnaire ** Dictionnaire::_trouverDebalancement(Dictionna
 
     return nullptr;
 }
+
 
 SensDebalanement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud)
 {
@@ -373,7 +477,10 @@ void Dictionnaire::_auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, cons
     }
     else
     {
-        p_noeud -> m_traductions.push_back(p_traduction);
+        if (!_contient(p_mot, p_noeud -> m_traductions))
+        {
+            p_noeud -> m_traductions.push_back(p_traduction);
+        }
     }
 
     _balancerDictionnaire(p_noeud);
@@ -505,6 +612,44 @@ void Dictionnaire::zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud)
     zigZigDroite(p_noeud);
 }
 
-// Complétez ici l'implémentation des autres méthodes demandées ainsi que vos méthodes privées.
+bool Dictionnaire::_contient(const std::string &p_mot, const std::vector<std::string> &p_traductions) const
+{
+    for (size_t i = 0; i < p_traductions.size(); i++)
+    {
+        if (p_traductions[i] == p_mot)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
+void Dictionnaire::_auxCalculerSimilitudes(const std::string &p_motMalEcrit, const Dictionnaire::NoeudDictionnaire * p_noeud, std::vector<paireSimilitudeMot> * p_motsSimilitudes)
+{
+    if (p_noeud != nullptr)
+    {
+        _auxCalculerSimilitudes(p_motMalEcrit, p_noeud -> m_gauche, p_motsSimilitudes);
+
+        paireSimilitudeMot paire;
+        paire.first = similitude(p_noeud -> m_mot, p_motMalEcrit);
+        paire.second = p_noeud -> m_mot;
+        p_motsSimilitudes -> push_back(paire);
+
+        _auxCalculerSimilitudes(p_motMalEcrit, p_noeud -> m_droite, p_motsSimilitudes);
+    }
+
+}
+
+
+void Dictionnaire::_auxDestructeur(NoeudDictionnaire * p_noeud)
+{
+    if (p_noeud != nullptr)
+    {
+        _auxDestructeur(p_noeud -> m_gauche);
+        _auxDestructeur(p_noeud -> m_droite);
+    }
+    delete p_noeud;
+}
   
 }//Fin du namespace

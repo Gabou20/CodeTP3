@@ -20,60 +20,51 @@
 namespace TP3
 {
 
+/**
+ * \typedef enum SensDebalancement
+ * \brief Ce type est utilise pour identifier la rotation a effectuer
+ */
 typedef enum
 {
     GG, DD, GD, DG
 } SensDebalanement;
 
-//classe représentant un dictionnaire des synonymes
+
+/**
+ * \typedef paireSimilitude
+ * \brief Ce type est utilise pour stocker les mots et leur indice de similitude dans un vecteur lors de la recherche des meilleurs candidats pour remplacer un mot mal ecrit.
+ */
+typedef std::pair<double, std::string> paireSimilitudeMot;
+
+
+/**
+ * \class Dictionnaire
+ * \brief Classe utilisee pour representer un dictionnaire de mots anglais et leurs traductions en francais. Chaque dictionnaire est constitue d'un arbre AVL, implemente par chainage.
+ */
 class Dictionnaire
 {
 public:
 
-	//Constructeur
 	Dictionnaire();
 
-	//Constructeur de dictionnaire à partir d'un fichier
-	//Le fichier doit être ouvert au préalable
 	Dictionnaire(std::ifstream &p_fichier);
 
-	//Destructeur.
 	~Dictionnaire();
 
-	//Ajouter un mot au dictionnaire et l'une de ses traductions en équilibrant l'arbre AVL
 	void ajouteMot(const std ::string& p_motOriginal, const std ::string& p_motTraduit);
 
-	//Supprimer un mot et équilibrer l'arbre AVL
-	//Si le mot appartient au dictionnaire, on l'enlève et on équilibre. Sinon, on ne fait rien.
-	//Exception	logic_error si l'arbre est vide
-	//Exception	logic_error si le mot n'appartient pas au dictionnaire
 	void supprimeMot(const std ::string& p_motOriginal);
 
-	//Quantifier la similitude entre 2 mots (dans le dictionnaire ou pas)
-	//Ici, 1 représente le fait que les 2 mots sont identiques, 0 représente le fait que les 2 mots sont complètements différents
-	//On retourne une valeur entre 0 et 1 quantifiant la similarité entre les 2 mots donnés
-	//Vous pouvez utiliser par exemple la distance de Levenshtein, mais ce n'est pas obligatoire !
 	double similitude(const std ::string& p_mot1, const std ::string& p_mot2);
 
-	//Suggère des corrections pour le mot motMalEcrit sous forme d'une liste de mots, dans un vector, à partir du dictionnaire
-	//S'il y a suffisament de mots, on redonne 5 corrections possibles au mot donné. Sinon, on en donne le plus possible
-	//Exception	logic_error si le dictionnaire est vide
 	std::vector<std::string> suggereCorrections(const std ::string& p_motMalEcrit);
 
-	//Trouver les traductions possibles d'un mot
-	//Si le mot appartient au dictionnaire, on retourne le vecteur des traductions du mot donné.
-	//Sinon, on retourne un vecteur vide
 	std::vector<std::string> traduit(const std ::string& p_mot);
 
-	//Vérifier si le mot donné appartient au dictionnaire
-	//On retourne true si le mot est dans le dictionnaire. Sinon, on retourne false.
 	bool appartient(const std::string &p_data);
 
-	//Vérifier si le dictionnaire est vide
 	bool estVide() const;
 
-	//Affiche à l'écran l'arbre niveau par niveau de façon à voir si l'arbre est bien balancé.
-	//Ne touchez pas s.v.p. à cette méthode !
     friend std::ostream& operator<<(std::ostream& out, const Dictionnaire& d)
     {
   	  if (d.m_racine != 0)
@@ -147,7 +138,7 @@ private:
 
     int m_cpt;						// Le nombre de mots dans le dictionnaire
 
-	NoeudDictionnaire * _trouverNoeud(NoeudDictionnaire* p_noeud, const std::string &p_data) const;
+	NoeudDictionnaire * _trouverNoeud(NoeudDictionnaire* p_noeud, const std::string &p_mot) const;
 
     bool estBalance();
 
@@ -171,7 +162,13 @@ private:
 
     void zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
 
+    bool _contient(const std::string &p_mot, const std::vector<std::string> &p_traductions) const;
+
     SensDebalanement sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud);
+
+    void _auxCalculerSimilitudes(const std::string &p_motMalEcrit, const NoeudDictionnaire * p_noeud, std::vector<paireSimilitudeMot> * p_motsSimilitudes);
+
+    void _auxDestructeur(NoeudDictionnaire * p_noeud);
 };
     
 }

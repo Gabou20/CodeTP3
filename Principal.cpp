@@ -21,7 +21,6 @@ int main()
 
 	try
 	{
-
 		string reponse = "";
 		ifstream englishFrench;
 
@@ -47,7 +46,6 @@ int main()
 		//Initialisation d'un ditionnaire, avec le constructeur qui utilise un fstream
 		Dictionnaire dictEnFr(englishFrench);
 		englishFrench.close();
-
 
 	    // Affichage du dictionnaire niveau par niveau
 	    cout << dictEnFr << endl;
@@ -78,7 +76,7 @@ int main()
             {
                 std::string choix = "";
                 int n = 0;
-                cout << "Il existe plusieurs traductions possibles, vous devez choisir : " << "\n";
+                cout << "Il existe plusieurs traductions possibles pour le mot" << *i << ", vous devez choisir : " << "\n";
 
                 for (vector<string>::const_iterator it = traductionsPossibles.begin(); it != traductionsPossibles.end(); it++)
                 {
@@ -92,6 +90,25 @@ int main()
             else if (traductionsPossibles.size() == 1)
             {
                 motsFrancais.push_back(traductionsPossibles[0]);
+            }
+            else if (traductionsPossibles.size() == 0)
+            {
+                std::string choixUtilisateur = "";
+                cout << "Le mot " << *i << " n'existe pas, choisissez un mot parmi les suivants : " << "\n";
+
+                std::vector<std::string> choixMots = dictEnFr.suggereCorrections(*i);
+
+                int n = 0;
+                for (vector<string>::const_iterator it = choixMots.begin(); it != choixMots.end(); it++)
+                {
+                    cout << n + 1 << ". " << *it << "\n";
+                    n++;
+                }
+
+                getline(cin, choixUtilisateur);
+                motsAnglais.erase(i);
+                motsAnglais.insert(i, choixMots[stoi(choixUtilisateur) - 1]);
+                i--;
             }
 		}
 
