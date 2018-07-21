@@ -219,13 +219,12 @@ std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_
     std::sort(motsSimilitudes.begin(), motsSimilitudes.end());
 
     std::vector<std::string> choixMots;
-
-    std::vector<PaireSimilitudeMot>::iterator it = motsSimilitudes.end();
-
-    for (int n = 0; n < 5 && it-- != motsSimilitudes.begin(); ++n)
+    int n = std::min(motsSimilitudes.size(), 5);
+    while (n-- < 0)
     {
-        choixMots.push_back(it -> second);
+        choixMots.push_back(motsSimilitudes[n] -> second);
     }
+    
     return choixMots;
 }
 
@@ -326,14 +325,7 @@ Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(NoeudDictionnaire*
  */
 int Dictionnaire::trouverHauteurGauche(const Dictionnaire::NoeudDictionnaire* p_noeud) const
 {
-    if (p_noeud -> m_gauche == nullptr)
-    {
-        return -1;
-    }
-    else
-    {
-        return p_noeud -> m_gauche -> m_hauteur;
-    }
+    return p_noeud -> m_gauche == nullptr ? -1 : p_noeud -> m_gauche -> m_hauteur;
 }
 
 
@@ -350,14 +342,7 @@ int Dictionnaire::trouverHauteurGauche(const Dictionnaire::NoeudDictionnaire* p_
  */
 int Dictionnaire::trouverHauteurDroite(const Dictionnaire::NoeudDictionnaire* p_noeud) const
 {
-    if (p_noeud -> m_droite == nullptr)
-    {
-        return -1;
-    }
-    else
-    {
-        return p_noeud -> m_droite -> m_hauteur;
-    }
+    return p_noeud -> m_droite == nullptr ? -1 : p_noeud -> m_droite -> m_hauteur;
 }
 
 
