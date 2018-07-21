@@ -27,14 +27,14 @@ namespace TP3
 typedef enum
 {
     GG, DD, GD, DG
-} SensDebalanement;
+} SensDebalancement;
 
 
 /**
  * \typedef paireSimilitude
  * \brief Ce type est utilise pour stocker les mots et leur indice de similitude dans un vecteur lors de la recherche des meilleurs candidats pour remplacer un mot mal ecrit.
  */
-typedef std::pair<double, std::string> paireSimilitudeMot;
+typedef std::pair<double, std::string> PaireSimilitudeMot;
 
 
 /**
@@ -51,15 +51,15 @@ public:
 
 	~Dictionnaire();
 
-	void ajouteMot(const std ::string& p_motOriginal, const std ::string& p_motTraduit);
+	void ajouteMot(const std::string& p_motOriginal, const std::string& p_motTraduit);
 
-	void supprimeMot(const std ::string& p_motOriginal);
+	void supprimeMot(const std::string& p_motOriginal);
 
-	double similitude(const std ::string& p_mot1, const std ::string& p_mot2);
+	double similitude(const std::string& p_mot1, const std::string& p_mot2);
 
-	std::vector<std::string> suggereCorrections(const std ::string& p_motMalEcrit);
+	std::vector<std::string> suggereCorrections(const std::string& p_motMalEcrit);
 
-	std::vector<std::string> traduit(const std ::string& p_mot);
+	std::vector<std::string> traduit(const std::string& p_mot);
 
 	bool appartient(const std::string &p_data);
 
@@ -142,31 +142,33 @@ private:
 
     bool estBalance();
 
-    NoeudDictionnaire ** _trouverDebalancement(Dictionnaire::NoeudDictionnaire* &p_noeud) const;
+    NoeudDictionnaire ** _trouverDebalancement(NoeudDictionnaire* &p_noeud) const;
 
-    void _auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction);
+    void _auxAjouteMot(NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction);
 
     void _auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::string &p_mot);
 
-    void _balancerDictionnaire(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    void _balancerDictionnaire(NoeudDictionnaire* &p_noeud);
 
-    int trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const;
+    int trouverHauteurGauche(const NoeudDictionnaire* p_noeud) const;
 
-    void ajusterHauteur(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    int trouverHauteurDroite(const NoeudDictionnaire* p_noeud) const;
 
-    void zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    void ajusterHauteur(NoeudDictionnaire* &p_noeud);
 
-    void zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    void zigZigGauche(NoeudDictionnaire* &p_noeud);
 
-    void zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    void zigZigDroite(NoeudDictionnaire* &p_noeud);
 
-    void zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud);
+    void zigZagGauche(NoeudDictionnaire* &p_noeud);
 
-    bool _contient(const std::string &p_mot, const std::vector<std::string> &p_traductions) const;
+    void zigZagDroite(NoeudDictionnaire* &p_noeud);
 
-    SensDebalanement sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud);
+    bool _contient(const std::string &p_mot, const std::vector<std::string> &p_liste) const;
 
-    void _auxCalculerSimilitudes(const std::string &p_motMalEcrit, const NoeudDictionnaire * p_noeud, std::vector<paireSimilitudeMot> * p_motsSimilitudes);
+    SensDebalancement sensDebalancement(NoeudDictionnaire* p_noeud);
+
+    void _auxCalculerSimilitudes(const std::string &p_motMalEcrit, const NoeudDictionnaire * p_noeud, std::vector<PaireSimilitudeMot> * p_motsSimilitudes);
 
     void _auxDestructeur(NoeudDictionnaire * p_noeud);
 };

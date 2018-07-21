@@ -149,13 +149,13 @@ void Dictionnaire::supprimeMot(const std ::string& p_motOriginal)
  */
 double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& p_mot2)
 {
-    float differenceLongueurs = abs((int) p_mot1.length() - p_mot2.length());// La fonction compare les deux mots lettre a lettre, et additionne 1 au total pour chaque lettre non identique.
-    float distanceDuDebut = differenceLongueurs;                             // De plus, a difference de longueur est consideree (+1 pour chaque lettre de difference).
-    float distanceDeLaFin = differenceLongueurs;                             // Les deux mots sont compares du debut et de la fin, et le total le plus bas est conserve.
+    double differenceLongueurs = abs((int) p_mot1.length() - p_mot2.length());// La fonction compare les deux mots lettre a lettre, et additionne 1 au total pour chaque lettre non identique.
+    double distanceDuDebut = differenceLongueurs;                             // De plus, a difference de longueur est consideree (+1 pour chaque lettre de difference).
+    double distanceDeLaFin = differenceLongueurs;                             // Les deux mots sont compares du debut et de la fin, et le total le plus bas est conserve.
 
     if (p_mot1.length() != 0 && p_mot2.length() != 0)
     {
-        for (int i = 0; i < p_mot1.length(); i++)
+        for (int i = 0; i < std::min(p_mot1.length(), p_mot2.length()); i++)
         {
             if (p_mot1[i] != p_mot2[i])
             {
@@ -164,9 +164,9 @@ double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& 
         }
 
         std::string mot1(p_mot1);
-        std::reverse(mot1.begin(), mot1.begin() + mot1.length());
+        std::reverse(mot1.begin(), mot1.end());
         std::string mot2(p_mot1);
-        std::reverse(mot2.begin(), mot2.begin() + mot2.length());
+        std::reverse(mot2.begin(), mot2.end());
         for (int i = 0; i < p_mot1.length(); i++)
         {
             if (p_mot1[i] != p_mot2[i])
@@ -176,7 +176,7 @@ double Dictionnaire::similitude(const std ::string& p_mot1, const std ::string& 
         }
     }
 
-    float distance = std::min(distanceDuDebut, distanceDeLaFin);
+    double distance = std::min(distanceDuDebut, distanceDeLaFin);
     distance = (distance/std::max(p_mot1.length(), p_mot2.length()));
 
     if (distance == 0)                          // Ici la distance calculee est ramenee entre 0 et 1.
@@ -213,19 +213,18 @@ std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_
         throw std::logic_error("Le dictionnaire est vide!");
     }
 
-    std::vector<paireSimilitudeMot> motsSimilitudes;
+    std::vector<PaireSimilitudeMot> motsSimilitudes;
     _auxCalculerSimilitudes(p_motMalEcrit, m_racine, &motsSimilitudes);
 
     std::sort(motsSimilitudes.begin(), motsSimilitudes.end());
 
     std::vector<std::string> choixMots;
-    int n = 0;
-    std::vector<paireSimilitudeMot>::iterator it = motsSimilitudes.end();
-    it--;
-    for (it; n < 5; it--)
+
+    std::vector<PaireSimilitudeMot>::iterator it = motsSimilitudes.end();
+
+    for (int n = 0; n < 5 && it-- != motsSimilitudes.begin(); ++n)
     {
         choixMots.push_back(it -> second);
-        n++;
     }
     return choixMots;
 }
@@ -264,12 +263,7 @@ std::vector<std::string> Dictionnaire::traduit(const std ::string& p_mot)
  */
 bool Dictionnaire::appartient(const std::string &p_data)
 {
-    if (this -> estVide())
-    {
-        return false;
-    }
-
-    return Dictionnaire::_trouverNoeud(m_racine, p_data) != nullptr && !this -> estVide();
+    return Dictionnaire::_trouverNoeud(m_racine, p_data) != nullptr; //&& !estVide()?
 }
 
 
@@ -289,76 +283,80 @@ bool Dictionnaire::estVide() const
 /**
  * \fn Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_data) const
  *
+ * \brief Trouve un noeud de facon recursive, en se basant sur le mot anglais
+ *
  * \pre Le noeud en argument ne doit pas etre nullptr
  *
- * \brief Trouve un noeud de facon recursive, en se basant sur le mot anglais
+ * \param[in] p_noeud Le noeud a partir duquel on effectue la recherche
+ * \param[in] p_mot Le mot qu'on cherche
  *
  * \return Retourne le meme noeud si p_noeud contient le bon mot, le bon noeud enfant sinon et nullptr si on a atteint une feuille
  */
-Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(Dictionnaire::NoeudDictionnaire* p_noeud, const std::string &p_mot) const
+Dictionnaire::NoeudDictionnaire * Dictionnaire::_trouverNoeud(NoeudDictionnaire* p_noeud, const std::string &p_mot) const
 {
+    if (p_noeud == nullptr)
+    {
+        return nullptr;
+    }
     if (p_noeud -> m_mot == p_mot)
     {
         return p_noeud;
     }
     else if (p_mot < p_noeud -> m_mot)
     {
-        if (p_noeud -> m_gauche == nullptr)
-        {
-            return nullptr;
-        }
-        else
-        {
-            return Dictionnaire::_trouverNoeud(p_noeud -> m_gauche, p_mot);
-        }
+        return _trouverNoeud(p_noeud -> m_gauche, p_mot);
     }
     else if (p_mot > p_noeud -> m_mot)
     {
-        if (p_noeud -> m_droite == nullptr)
-        {
-            return nullptr;
-        }
-        else
-        {
-            return Dictionnaire::_trouverNoeud(p_noeud -> m_droite, p_mot);
-        }
+        return _trouverNoeud(p_noeud -> m_droite, p_mot);
     }
 }
 
 
 /**
- * \fn int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const
+ * \fn int Dictionnaire::trouverHauteurGauche(const Dictionnaire::NoeudDictionnaire* p_noeud) const
  *
- * \brief Trouve la hauteur d'un noeud enfant de p_noeud de facon recursive
+ * \brief Trouve la hauteur du fils gauche d'un noeud
  *
- * \return La hauteur du fils du cote p_cote de p_noeud
+ * \pre p_noeud n'est pas nullptr
+ *
+ * \param[in] p_noeud Le noeud dont on veut la hauteur du fils gauche
+ *
+ * \return La hauteur du fils gauche de p_noeud
  */
-int Dictionnaire::trouverHauteur(const Dictionnaire::NoeudDictionnaire* p_noeud, std::string p_cote) const
+int Dictionnaire::trouverHauteurGauche(const Dictionnaire::NoeudDictionnaire* p_noeud) const
 {
-    Dictionnaire::NoeudDictionnaire* cote;
-
-    if (p_noeud == nullptr)
-    {
-        return -1;
-    }
-
-    if (p_cote == "gauche")
-    {
-        cote = p_noeud -> m_gauche;
-    }
-
-    if (p_cote == "droite")
-    {
-        cote = p_noeud -> m_droite;
-    }
-
-    if (cote == nullptr)
+    if (p_noeud -> m_gauche == nullptr)
     {
         return -1;
     }
     else
     {
-        return cote -> m_hauteur;
+        return p_noeud -> m_gauche -> m_hauteur;
+    }
+}
+
+
+/**
+ * \fn int Dictionnaire::trouverHauteurDroite(const Dictionnaire::NoeudDictionnaire* p_noeud) const
+ *
+ * \brief Trouve la hauteur du fils droit d'un noeud
+ *
+ * \pre p_noeud n'est pas null
+ *
+ * \param[in] p_noeud Le noeud dont on veut calculer la hauteur du fils droit
+ *
+ * \return La hauteur du fils droit de p_noeud
+ */
+int Dictionnaire::trouverHauteurDroite(const Dictionnaire::NoeudDictionnaire* p_noeud) const
+{
+    if (p_noeud -> m_droite == nullptr)
+    {
+        return -1;
+    }
+    else
+    {
+        return p_noeud -> m_droite -> m_hauteur;
     }
 }
 
@@ -376,10 +374,19 @@ bool Dictionnaire::estBalance()
 }
 
 
+/**
+ * \fn Dictionnaire::NoeudDictionnaire ** Dictionnaire::_trouverDebalancement(Dictionnaire::NoeudDictionnaire* &p_noeud) const
+ *
+ * \brief Trouve un noeud critique (qui est debalance) s"il y en a au moins un
+ *
+ * \param[in] p_noeud Le noeud a partir duquel on effectue la recherche
+ *
+ * \return Le pointeur d'un noeud qui est debalance, nullptr s'il n'y en a pas
+ */
 Dictionnaire::NoeudDictionnaire ** Dictionnaire::_trouverDebalancement(Dictionnaire::NoeudDictionnaire* &p_noeud) const
 {
-    int gauche = trouverHauteur(p_noeud, "gauche");
-    int droite = trouverHauteur(p_noeud, "droite");
+    int gauche = trouverHauteurGauche(p_noeud);
+    int droite = trouverHauteurDroite(p_noeud);
 
     if (gauche - droite < -1 || gauche - droite > 1)
     {
@@ -405,11 +412,22 @@ Dictionnaire::NoeudDictionnaire ** Dictionnaire::_trouverDebalancement(Dictionna
 }
 
 
-SensDebalanement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud)
+/**
+ * \fn SensDebalancement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud)
+ *
+ * \brief Determine le sens du debalancement d'un noeud critique
+ *
+ * \param[in] p_noeud Le noeud dont on veut trouver le sens de debalancement
+ *
+ * \exception logic_error si le noeud passe en argument ne debalance pas
+ *
+ * \return Le sens du debalancement, soit l'une des 4 possibilites suivantes : GG, DD, GD et DG
+ */
+SensDebalancement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire* p_noeud)
 {
 
-    int gauche = trouverHauteur(p_noeud, "gauche");
-    int droite = trouverHauteur(p_noeud, "droite");
+    int gauche = trouverHauteurGauche(p_noeud);
+    int droite = trouverHauteurDroite(p_noeud);
     int gaucheGauche;
     int gaucheDroite;
     int droiteDroite;
@@ -417,14 +435,14 @@ SensDebalanement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire
 
     if (gauche != -1)
     {
-        gaucheGauche = trouverHauteur(p_noeud -> m_gauche, "gauche");
-        gaucheDroite = trouverHauteur(p_noeud -> m_gauche, "droite");
+        gaucheGauche = trouverHauteurGauche(p_noeud -> m_gauche);
+        gaucheDroite = trouverHauteurDroite(p_noeud -> m_gauche);
     }
 
     if (droite != -1)
     {
-        droiteDroite = trouverHauteur(p_noeud -> m_droite, "droite");
-        droiteGauche = trouverHauteur(p_noeud -> m_droite, "gauche");
+        droiteDroite = trouverHauteurDroite(p_noeud -> m_droite);
+        droiteGauche = trouverHauteurGauche(p_noeud -> m_droite);
     }
 
     //Debalancement a gauche
@@ -457,6 +475,17 @@ SensDebalanement Dictionnaire::sensDebalancement(Dictionnaire::NoeudDictionnaire
 }
 
 
+/**
+ * \fn void Dictionnaire::_auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction)
+ *
+ * \brief Ajoute un mot en cherchant le bon endroit de facon recursive. Si le mot anglais est deja present, le mot francais est ajoute a la liste de traductions possibles (s'il n'etait pas deja la), et rebalance l'arbre apres l'ajout
+ *
+ * \param[in] p_noeud Le noeud a partir duquel on cherche l'endroit ou il faudrait inserer le mot
+ * \param[in] p_mot Le mot anglais a trouver/inserer
+ * \param[in] p_traduction La traduction francaise de p_mot a ajouter
+ *
+ * \post Le mot et sa traduction se trouvent maintenant dans le dictionnaire, qui est toujours balance
+ */
 void Dictionnaire::_auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, const std::string &p_mot, const std::string &p_traduction)
 {
     if (p_noeud == nullptr)
@@ -484,18 +513,21 @@ void Dictionnaire::_auxAjouteMot(Dictionnaire::NoeudDictionnaire* &p_noeud, cons
     }
 
     _balancerDictionnaire(p_noeud);
-
-    if (estVide())
-    {
-        m_racine = p_noeud;
-    }
-
 }
 
+
+/**
+ * \fn void Dictionnaire::_auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::string &p_mot)
+ *
+ * \brief Supprime un mot (son noeud) en cherchant le bon noeud de facon recursive, puis rebalance l'arbre apres la suppression.
+ *
+ * \param[in] p_noeud Le noeud a partir duquel on cherche le mot a supprimer
+ * \param[in] p_mot Le mot anglais a supprimer du dictionnaire
+ *
+ * \post Le noeud qui contenait le mot p_mot n'existe plus dans l'arbre du dictionnaire, et ce dernier est toujours balance
+ */
 void Dictionnaire::_auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::string &p_mot)
 {
-    //NoeudDictionnaire * noeudMot = _trouverNoeud(m_racine, p_mot);
-
     if (p_noeud == nullptr)
     {
         throw std::logic_error("Tentative de suppression d'un mot inexistant!");
@@ -526,6 +558,10 @@ void Dictionnaire::_auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::stri
     }
     else if (p_noeud -> m_gauche != nullptr || p_noeud -> m_hauteur == 0)
     {
+        if (m_cpt == 1)
+        {
+            m_racine = nullptr; //Si le noeud qui est supprime ici etait le seul noeud de l'arbre, il faut mettre la racine a NULL
+        }
         NoeudDictionnaire * aSupprimer = p_noeud;
         p_noeud = p_noeud -> m_gauche;
         delete aSupprimer;
@@ -542,6 +578,16 @@ void Dictionnaire::_auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::stri
     _balancerDictionnaire(p_noeud);
 }
 
+
+/**
+ * \fn void Dictionnaire::_balancerDictionnaire(NoeudDictionnaire* &p_noeud)
+ *
+ * \brief Fonction qui balance le dictionnaire de facon recursive.
+ *
+ * \param[in] p_noeud Le noeud a partir duquel on balance le dictionnaire
+ *
+ * \post L'arbre du dictionnaire est balance
+ */
 void Dictionnaire::_balancerDictionnaire(NoeudDictionnaire* &p_noeud)
 {
     if (estVide()) return;
@@ -550,7 +596,7 @@ void Dictionnaire::_balancerDictionnaire(NoeudDictionnaire* &p_noeud)
     Dictionnaire::NoeudDictionnaire ** noeudCritique = _trouverDebalancement(p_noeud);
     if (noeudCritique == nullptr) return;
 
-    SensDebalanement sens = sensDebalancement(*noeudCritique);
+    SensDebalancement sens = sensDebalancement(*noeudCritique);
 
     if (sens == GG)
     {
@@ -574,11 +620,31 @@ void Dictionnaire::_balancerDictionnaire(NoeudDictionnaire* &p_noeud)
     }
 }
 
+
+/**
+ * \fn void Dictionnaire::ajusterHauteur(Dictionnaire::NoeudDictionnaire* &p_noeud)
+ *
+ * \brief Fonction qui ajuste la hauteur d'un noeud en ajoutant 1 a la hauteur maximale entre ses deux fils
+ *
+ * \param[in] p_noeud Le noeud duquel il faut ajuster la hauteur
+ *
+ * \post La valeur de l'attribut m_hauteur de p_noeud est ajustee
+ */
 void Dictionnaire::ajusterHauteur(Dictionnaire::NoeudDictionnaire* &p_noeud)
 {
-    p_noeud -> m_hauteur = 1 + std::max(trouverHauteur(p_noeud, "gauche"), trouverHauteur(p_noeud, "droite"));
+    p_noeud -> m_hauteur = 1 + std::max(trouverHauteurGauche(p_noeud), trouverHauteurDroite(p_noeud));
 }
 
+
+/**
+ * \fn void Dictionnaire::zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
+ *
+ * \brief Effectue une rotation de type zigZigGauche (une seule rotation) sur le noeud critique p_noeud
+ *
+ * \param[in] p_noeud Le noeud critique pour lequel la rotation doit etre effectuee
+ *
+ * \post Le noeud p_noeud est balance
+ */
 void Dictionnaire::zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
 {
     Dictionnaire::NoeudDictionnaire* ancienGauche = p_noeud -> m_gauche;
@@ -589,6 +655,16 @@ void Dictionnaire::zigZigGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
     p_noeud = ancienGauche;
 }
 
+
+/**
+ * \fn void Dictionnaire::zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeudCritique)
+ *
+ * \brief Effectue une rotation de type zigZigDroit (une seule rotation) sur le noeud critique p_noeud
+ *
+ * \param[in] p_noeud Le noeud critique pour lequel la rotation doit etre effectuee
+ *
+ * \post Le noeud p_noeud est balance
+ */
 void Dictionnaire::zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeudCritique)
 {
     Dictionnaire::NoeudDictionnaire * sousCritique = p_noeudCritique -> m_droite;
@@ -599,6 +675,16 @@ void Dictionnaire::zigZigDroite(Dictionnaire::NoeudDictionnaire* &p_noeudCritiqu
     p_noeudCritique = sousCritique;
 }
 
+
+/**
+ * \fn void Dictionnaire::zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
+ *
+ * \brief Effectue une rotation de type zigZagGauche (deux rotations) sur le noeud critique p_noeud
+ *
+ * \param[in] p_noeud Le noeud critique pour lequel la rotation doit etre effectuee
+ *
+ * \post Le noeud p_noeud est balance
+ */
 void Dictionnaire::zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
 {
     zigZigDroite(p_noeud -> m_gauche);
@@ -606,17 +692,38 @@ void Dictionnaire::zigZagGauche(Dictionnaire::NoeudDictionnaire* &p_noeud)
 
 }
 
+
+/**
+ * \fn void Dictionnaire::zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud)
+ *
+ * \brief Effectue une rotation de type zigZagDroit (deux rotations) sur le noeud critique p_noeud
+ *
+ * \param[in] p_noeud Le noeud critique pour lequel la rotation doit etre effectuee
+ *
+ * \post Le noeud p_noeud est balance
+ */
 void Dictionnaire::zigZagDroite(Dictionnaire::NoeudDictionnaire* &p_noeud)
 {
     zigZigGauche(p_noeud -> m_droite);
     zigZigDroite(p_noeud);
 }
 
-bool Dictionnaire::_contient(const std::string &p_mot, const std::vector<std::string> &p_traductions) const
+
+/**
+ * \fn bool Dictionnaire::_contient(const std::string &p_mot, const std::vector<std::string> &p_liste) const
+ *
+ * \brief Verifie si un mot est present dans une liste
+ *
+ * \param[in] p_mot Le mot a chercher dans la liste
+ * \param[in] p_liste La liste dans laquelle le mot est cherche
+ *
+ * \return true si p_mot est dans p_liste, false sinon
+ */
+bool Dictionnaire::_contient(const std::string &p_mot, const std::vector<std::string> &p_liste) const
 {
-    for (size_t i = 0; i < p_traductions.size(); i++)
+    for (size_t i = 0; i < p_liste.size(); i++)
     {
-        if (p_traductions[i] == p_mot)
+        if (p_liste[i] == p_mot)
         {
             return true;
         }
@@ -625,13 +732,24 @@ bool Dictionnaire::_contient(const std::string &p_mot, const std::vector<std::st
 }
 
 
-void Dictionnaire::_auxCalculerSimilitudes(const std::string &p_motMalEcrit, const Dictionnaire::NoeudDictionnaire * p_noeud, std::vector<paireSimilitudeMot> * p_motsSimilitudes)
+/**
+ * \fn void Dictionnaire::_auxCalculerSimilitudes(const std::string &p_motMalEcrit, const Dictionnaire::NoeudDictionnaire * p_noeud, std::vector<paireSimilitudeMot> * p_motsSimilitudes)
+ *
+ * \brief Cree un vecteur de paires contenant chaque mot du dictionnaire ainsi que son indice de similitude par rapport a un mot. Cette fonction est recursive.
+ *
+ * \param[in] p_motMalEcrit Le mot avec lequel il faut comparer les mots du dictionnaire
+ * \param[in] p_noeud Le noeud a partir duquel on calcule les indices de similitudes
+ * \param[in] p_motsSimilitudes Le vecteur dans lequel il faut inserer les paires indice-mot
+ *
+ * \post Le vecteur p_motsSimilitudes contient tous les mots du dictionnaire avec leur indice de similitude
+ */
+void Dictionnaire::_auxCalculerSimilitudes(const std::string &p_motMalEcrit, const Dictionnaire::NoeudDictionnaire * p_noeud, std::vector<PaireSimilitudeMot> * p_motsSimilitudes)
 {
     if (p_noeud != nullptr)
     {
         _auxCalculerSimilitudes(p_motMalEcrit, p_noeud -> m_gauche, p_motsSimilitudes);
 
-        paireSimilitudeMot paire;
+        PaireSimilitudeMot paire;
         paire.first = similitude(p_noeud -> m_mot, p_motMalEcrit);
         paire.second = p_noeud -> m_mot;
         p_motsSimilitudes -> push_back(paire);
@@ -642,6 +760,15 @@ void Dictionnaire::_auxCalculerSimilitudes(const std::string &p_motMalEcrit, con
 }
 
 
+/**
+ * \fn void Dictionnaire::_auxDestructeur(NoeudDictionnaire * p_noeud)
+ *
+ * \brief Detruit les noeuds du dictionnaire de facon recursive
+ *
+ * \param[in] p_noeud Le noeud a partir duquel on effectue la suppression
+ *
+ * \post p_noeud et tous ses descendants ont ete detruits
+ */
 void Dictionnaire::_auxDestructeur(NoeudDictionnaire * p_noeud)
 {
     if (p_noeud != nullptr)

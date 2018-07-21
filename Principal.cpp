@@ -76,7 +76,7 @@ int main()
             {
                 std::string choix = "";
                 int n = 0;
-                cout << "Il existe plusieurs traductions possibles pour le mot" << *i << ", vous devez choisir : " << "\n";
+                cout << "Il existe plusieurs traductions possibles pour le mot " << *i << ", vous devez choisir : " << "\n";
 
                 for (vector<string>::const_iterator it = traductionsPossibles.begin(); it != traductionsPossibles.end(); it++)
                 {
