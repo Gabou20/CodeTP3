@@ -75,27 +75,40 @@ int main()
 		//Si plusieurs traductions sont possibles, l'utilisateur doit choisir	
             if (traductionsPossibles.size() > 1)
             {
-		std::string choix = "";
-		bool inputOk = true;
-		do
-		{
-			int n = 0;
-			cout << "Il existe plusieurs traductions possibles pour le mot " << *i << ", vous devez choisir : " << endl;
+                std::string choix = "";
+                bool inputOk = true;
+                do
+                {
+                    int n = 0;
+                    cout << "Il existe plusieurs traductions possibles pour le mot " << *i << ", vous devez choisir : " << endl;
 
-			for (vector<string>::const_iterator it = traductionsPossibles.begin(); it != traductionsPossibles.end(); it++)
-			{
-			    cout << ++n << ". " << *it << endl;
-			}
+                    for (vector<string>::const_iterator it = traductionsPossibles.begin(); it != traductionsPossibles.end(); it++)
+                    {
+                        cout << ++n << ". " << *it << endl;
+                    }
 
-			getline(cin, choix);
-			if !(0 < stoi(choix) && stoi(choix) <= traductionsPossibles.size()) //! avant la parenthese ok?
-			{
-				inputOk = false;
-				cout << "Il faut entrer un entier correspondant à l'un des choix proposés" << endl;
-			}
-			
-		} while (!inputOk); //A tester
-		motsFrancais.push_back(traductionsPossibles[stoi(choix) - 1]);
+                    getline(cin, choix);
+                    try
+                    {
+                        if (0 >= stoi(choix) || stoi(choix) > traductionsPossibles.size())
+                        {
+                            inputOk = false;
+                            cout << "Il faut entrer un entier correspondant à l'un des choix proposés." << endl;
+                        }
+                        else
+                        {
+                            inputOk = true;
+                        }
+                    }
+                    catch (exception & e)
+                    {
+                        cout << "Il faut entrer un entier!" << endl;
+                        inputOk = false;
+                    };
+
+
+                } while (!inputOk); //A tester
+                motsFrancais.push_back(traductionsPossibles[stoi(choix) - 1]);
             }
             else if (traductionsPossibles.size() == 1)
             {
@@ -104,34 +117,44 @@ int main()
 		//Si le mot anglais n'eest pas trouvé dans le dictionnaire, on offre les mots les plus ressemblants
             else if (traductionsPossibles.size() == 0)
             {
-		inputOk = true;
-		do
-		{
-			std::string choixUtilisateur = "";
-			cout << "Le mot " << *i << " n'existe pas, choisissez un mot parmi les suivants : " << endl;
+                bool inputOk = true;
+                std::string choixUtilisateur = "";
+                std::vector<std::string> choixMots = dictEnFr.suggereCorrections(*i);
+                do
+                {
+                    cout << "Le mot " << *i << " n'existe pas, choisissez un mot parmi les suivants : " << endl;
 
-			std::vector<std::string> choixMots = dictEnFr.suggereCorrections(*i);
+                    int n = 0;
+                    for (vector<string>::const_iterator it = choixMots.begin(); it != choixMots.end(); it++)
+                    {
+                        cout << ++n << ". " << *it << endl;;
+                    }
 
-			int n = 0;
-			for (vector<string>::const_iterator it = choixMots.begin(); it != choixMots.end(); it++)
-			{
-			    cout << ++n << ". " << *it << endl;;
-			}
+                    getline(cin, choixUtilisateur);
+                    try
+                    {
+                        if (0 >= stoi(choixUtilisateur) || stoi(choixUtilisateur) > choixMots.size())
+                        {
+                            inputOk = false;
+                            cout << "Il faut entrer un entier correspondant à l'un des choix proposés." << endl;
+                        }
+                        else
+                        {
+                            inputOk = true;
+                        }
+                    }
+                    catch (exception & e)
+                    {
+                        cout << "Il faut entrer un entier!" << endl;
+                        inputOk = false;
+                    };
 
-			getline(cin, choixUtilisateur);
-			
-			if !(0 < stoi(choixUtilisateur) && stoi(choixUtilisateur) <= choixMots.size()) //! avant la parenthese ok?
-			{
-				inputOk = false;
-				cout << "Il faut entrer un entier correspondant à l'un des choix proposés" << endl;
-			}
-			
-		} while (!inputOk); //A tester
-			motsAnglais.erase(i);
-			motsAnglais.insert(i, choixMots[stoi(choixUtilisateur) - 1]);
-			i--;
+                } while (!inputOk);
+                motsAnglais.erase(i);
+                motsAnglais.insert(i, choixMots[stoi(choixUtilisateur) - 1]);
+                i--;
             }
-		}
+        }
 
 		stringstream phraseFrancais; // On crée un string contenant la phrase,
 									 // À partir du vecteur de mots traduits.

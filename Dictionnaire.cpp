@@ -217,12 +217,13 @@ std::vector<std::string> Dictionnaire::suggereCorrections(const std ::string& p_
     _auxCalculerSimilitudes(p_motMalEcrit, m_racine, &motsSimilitudes);
 
     std::sort(motsSimilitudes.begin(), motsSimilitudes.end());
-
     std::vector<std::string> choixMots;
-    int n = std::min(motsSimilitudes.size(), 5);
-    while (n-- < 0)
+
+    std::vector<PaireSimilitudeMot>::iterator it = motsSimilitudes.end();
+
+    for (int n = 0; n < std::min((int)motsSimilitudes.size(), 5) && it-- != motsSimilitudes.begin(); ++n)
     {
-        choixMots.push_back(motsSimilitudes[n] -> second);
+        choixMots.push_back(it -> second);
     }
     
     return choixMots;
@@ -545,7 +546,7 @@ void Dictionnaire::_auxSupprimeMot(NoeudDictionnaire * &p_noeud, const std::stri
     {
         if (m_cpt == 1)
         {
-            m_racine = nullptr; //Si le noeud qui est supprime ici etait le seul noeud de l'arbre, il faut mettre la racine a NULL
+            m_racine = nullptr; //Si le noeud qui est supprime ici etait le seul noeud de l'arbre, il faut mettre la racine a nullptr (a verifier)
         }
         NoeudDictionnaire * aSupprimer = p_noeud;
         p_noeud = p_noeud -> m_gauche;
